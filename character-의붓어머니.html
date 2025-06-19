@@ -7,55 +7,79 @@
 </head>
 <body>
   <main>
-    <h1>토하: 의붓어머니의 행동</h1>
+    <h1>의붓어머니의 행동: 순서3</h1>
+    <p>암살할 대상을 선택하세요. (아이템 '빗' 또는 '과도'를 가지고 있어야 성공합니다)</p>
+    <div id="action1">
+      <button onclick="performAction1('신데렐라')">신데렐라</button>
+      <button onclick="performAction1('돌리')">돌리</button>
+      <button onclick="performAction1('앨리시아')">앨리시아</button>
+      <button onclick="performAction1('병사')">병사</button>
+      <button onclick="performAction1('왕자')">왕자</button>
+    </div>
 
-    <form id="motherForm">
-      <section>
-        <h3>1. 암살 - (필요한 아이템을 가지고 있다면) 인물을 선택하고, 아니라면 실행하지 않음을 선택하세요.</h3>
-        <div id="targetButtons"></div>
-      </section>
-
-      <button type="submit">다음 캐릭터로</button>
-    </form>
+    <div id="action2" style="display:none; margin-top: 30px;">
+      <p>아이템을 파괴하시겠습니까? (아이템 이름: 철제 펜)</p>
+      <input type="text" id="itemInput" placeholder="아이템 이름 입력">
+      <button onclick="saveActions()">액션2 저장</button>
+    </div>
   </main>
 
+  <footer style="
+    position: fixed;
+    bottom: 40px;
+    width: 100%;
+    text-align: center;
+    z-index: 1000;
+  ">
+    <button style="
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffefb0;
+      border: 2px solid #999;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    " onclick="resetGame()">🔄 처음으로 되돌아가기</button>
+  </footer>
+
   <script>
-    const characters = ["왕자", "병사", "앨리시아", "신데렐라", "돌리", "실행하지 않음"];
-    const targetDiv = document.getElementById("targetButtons");
-    const form = document.getElementById("motherForm");
+    function performAction1(target) {
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      gameState.actions = gameState.actions || {};
+      gameState.actions["의붓어머니"] = gameState.actions["의붓어머니"] || {};
+      gameState.actions["의붓어머니"].action1 = target;
+      localStorage.setItem("gameState", JSON.stringify(gameState));
 
-    let selectedTarget = null;
+      document.getElementById("action1").style.display = "none";
+      document.getElementById("action2").style.display = "block";
+    }
 
-    characters.forEach(name => {
-      const btn = document.createElement("button");
-      btn.textContent = name;
-      btn.type = "button";
-      btn.onclick = () => {
-        selectedTarget = name;
-        targetDiv.querySelectorAll("button").forEach(b => b.disabled = false);
-        btn.disabled = true;
-      };
-      targetDiv.appendChild(btn);
-    });
-
-    form.onsubmit = function (e) {
-      e.preventDefault();
-
-      if (!selectedTarget) {
-        alert("대상을 선택해주세요.");
+    function saveActions() {
+      const item = document.getElementById("itemInput").value.trim();
+      if (!item) {
+        alert("아이템 이름을 입력해야 다음으로 진행할 수 있습니다.");
         return;
       }
-
-      const stored = localStorage.getItem("gameState");
-      const gameState = stored ? JSON.parse(stored) : { actions: {} };
-
-      gameState.actions["의붓어머니"] = {
-        action1: selectedTarget
-      };
-
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      gameState.actions = gameState.actions || {};
+      gameState.actions["의붓어머니"] = gameState.actions["의붓어머니"] || {};
+      gameState.actions["의붓어머니"].action2 = item;
       localStorage.setItem("gameState", JSON.stringify(gameState));
-      location.href = "character-앨리시아.html";
-    };
+
+      const next = gameState.orderQueue?.shift();
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      if (gameState.orderQueue && gameState.orderQueue.length > 0) {
+        window.location.href = `character-${gameState.orderQueue[0]}.html`;
+      } else {
+        window.location.href = "result.html";
+      }
+    }
+
+    function resetGame() {
+      localStorage.removeItem("gameState");
+      localStorage.removeItem("voteResult");
+      location.href = "character-왕자.html";
+    }
   </script>
 </body>
 </html>

@@ -8,56 +8,107 @@
 <body>
   <main>
     <h1>게임 결과</h1>
-    <p>최종 엔딩으로 이동 중입니다...</p>
+    <p>범인으로 지목된 캐릭터를 선택하세요:</p>
+    <div id="voteButtons">
+      <button onclick="selectVote('신데렐라')">신데렐라</button>
+      <button onclick="selectVote('돌리')">돌리</button>
+      <button onclick="selectVote('앨리시아')">앨리시아</button>
+      <button onclick="selectVote('의붓어머니')">의붓어머니</button>
+      <button onclick="selectVote('병사')">병사</button>
+      <button onclick="selectVote('왕자')">왕자</button>
+    </div>
+
+    <div id="resultSection" style="display:none; margin-top: 30px;">
+      <p>선택이 완료되었습니다. 아래 버튼을 눌러 엔딩을 확인하세요.</p>
+      <button onclick="goToEnding()">엔딩 보기</button>
+    </div>
   </main>
 
+  <footer style="
+    position: fixed;
+    bottom: 40px;
+    width: 100%;
+    text-align: center;
+    z-index: 1000;
+  ">
+    <button style="
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffefb0;
+      border: 2px solid #999;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    " onclick="resetGame()">🔄 처음으로 되돌아가기</button>
+  </footer>
+
   <script>
-    const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
-    const actions = gameState.actions || {};
-
-    const order = ["왕자", "병사", "의붓어머니", "앨리시아", "신데렐라", "돌리"];
-    if (gameState.orderOverride) {
-      const target = gameState.orderOverride;
-      const filtered = order.filter(c => c !== target && c !== "왕자");
-      order.splice(0, order.length, "왕자", target, ...filtered);
+    function selectVote(name) {
+      const voteMap = {
+        "신데렐라": "C",
+        "돌리": "D",
+        "앨리시아": "A",
+        "의붓어머니": "M",
+        "병사": "S",
+        "왕자": "P"
+      };
+      const code = voteMap[name];
+      localStorage.setItem("voteResult", code);
+      document.getElementById("voteButtons").style.display = "none";
+      document.getElementById("resultSection").style.display = "block";
     }
 
-    // 1. 종 상태 결정
-    let bellState = "R"; // 기본: 울림
-    for (const name of order) {
-      const action = actions[name];
-      if (!action) continue;
-      if (action.action2 === "철제 펜") {
-        if (["신데렐라", "앨리시아", "병사"].includes(name)) {
-          bellState = "B";
-          break;
-        } else if (["왕자", "의붓어머니", "돌리"].includes(name)) {
-          bellState = "R";
-          break;
+    function goToEnding() {
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      const vote = localStorage.getItem("voteResult") || "X";
+
+      let first = "R"; // 종 울림 기본값
+      let earliestBreaker = null;
+      const breakCandidates = ["신데렐라", "돌리", "앨리시아", "의붓어머니", "병사", "왕자"];
+      for (const name of breakCandidates) {
+        if (gameState.actions?.[name]?.action2?.includes("철제 펜")) {
+          if (!earliestBreaker || gameState.order.indexOf(name) < gameState.order.indexOf(earliestBreaker)) {
+            earliestBreaker = name;
+          }
         }
       }
-    }
+      if (earliestBreaker && ["신데렐라", "앨리시아", "병사"].includes(earliestBreaker)) {
+        first = "B";
+      }
 
-    // 2. 사용자 선택된 투표 결과 (로컬에 미리 저장된 값 또는 물어볼 수도 있음)
-    const vote = localStorage.getItem("voteResult") || "C";
-
-    // 3. 암살 결과 계산
-    const assassinTarget = actions["의붓어머니"]?.action1;
-    let killCode = "N";
-    if (assassinTarget && assassinTarget !== "실행하지 않음") {
-      const hasWeapon = ["빗", "과도"].some(w => actions["의붓어머니"]?.action2?.includes(w));
-      if (hasWeapon) {
-        const guard = actions["병사"]?.action1;
-        if (guard && guard.includes("의붓어머니") && guard.includes(assassinTarget)) {
-          killCode = "G";
+      let third = "N";
+      const target = gameState.actions?.["의붓어머니"]?.action1;
+      const item = gameState.actions?.["의붓어머니"]?.action2;
+      if (target && (item?.includes("빗") || item?.includes("과도"))) {
+        const protector = gameState.actions?.["병사"]?.action1;
+        if (protector?.attacker === "의붓어머니" && protector?.target === target) {
+          third = "G";
         } else {
-          killCode = assassinTarget[0];
+          third = convertTarget(target);
         }
       }
+
+      const endingCode = `${first}${vote}${third}`;
+      window.location.href = `ending/${endingCode}.html`;
     }
 
-    const final = `${bellState}${vote}${killCode}`;
-    window.location.href = `ending/${final}.html`;
+    function convertTarget(name) {
+      const map = {
+        "신데렐라": "C",
+        "돌리": "D",
+        "앨리시아": "A",
+        "의붓어머니": "M",
+        "병사": "S",
+        "왕자": "P"
+      };
+      return map[name] || "N";
+    }
+
+    function resetGame() {
+      localStorage.removeItem("gameState");
+      localStorage.removeItem("voteResult");
+      location.href = "character-왕자.html";
+    }
   </script>
 </body>
 </html>

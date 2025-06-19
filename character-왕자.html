@@ -7,66 +7,85 @@
 </head>
 <body>
   <main>
-    <h1>토하: 왕자의 행동</h1>
+    <h1>왕자의 선택: 순서1</h1>
+    <p>도움을 줄 캐릭터를 선택하세요. 해당 캐릭터는 왕자 다음 순서로 행동합니다.</p>
+    <div id="choiceArea">
+      <button onclick="choose('신데렐라')">신데렐라</button>
+      <button onclick="choose('돌리')">돌리</button>
+      <button onclick="choose('앨리시아')">앨리시아</button>
+      <button onclick="choose('의붓어머니')">의붓어머니</button>
+      <button onclick="choose('병사')">병사</button>
+    </div>
 
-    <form id="princeForm">
-      <section>
-        <h3>1. 왕자의 도움 - 행동 순서를 변경할 캐릭터를 선택하세요.</h3>
-        <div id="targetButtons"></div>
-      </section>
+    <div id="action2Area" style="display:none; margin-top: 30px;">
+      <p>아이템을 파괴하시겠습니까? (아이템 이름: 철제 펜)</p>
+      <input type="text" id="itemInput" placeholder="아이템 이름 입력">
+      <button onclick="saveAction2()">액션2 저장</button>
+    </div>
 
-      <section id="itemSection" style="display:none;">
-        <h3>2. 아이템 파괴 - 사용한 아이템 이름을 입력하세요.</h3>
-        <input type="text" name="item" placeholder="예: 철제 펜" required>
-      </section>
-
-      <button type="submit">다음 캐릭터로</button>
-    </form>
+    
   </main>
 
+  <footer style="
+    position: fixed;
+    bottom: 40px;
+    width: 100%;
+    text-align: center;
+    z-index: 1000;
+  ">
+    <button style="
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffefb0;
+      border: 2px solid #999;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    " onclick="resetGame()">🔄 처음으로 되돌아가기</button>
+  </footer>
+
   <script>
-    const characters = ["병사", "의붓어머니", "앨리시아", "신데렐라", "돌리"];
-    const targetDiv = document.getElementById("targetButtons");
-    const itemSection = document.getElementById("itemSection");
-    const form = document.getElementById("princeForm");
+    function choose(name) {
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      if (!gameState.actions) gameState.actions = {};
+      gameState.actions["왕자"] = gameState.actions["왕자"] || {};
+      gameState.actions["왕자"].action1 = name;
+      gameState.orderOverride = name;
 
-    let selectedTarget = null;
-
-    characters.forEach(name => {
-      const btn = document.createElement("button");
-      btn.textContent = name;
-      btn.type = "button";
-      btn.onclick = () => {
-        selectedTarget = name;
-        targetDiv.querySelectorAll("button").forEach(b => b.disabled = false);
-        btn.disabled = true;
-        itemSection.style.display = "block";
-      };
-      targetDiv.appendChild(btn);
-    });
-
-    form.onsubmit = function (e) {
-      e.preventDefault();
-
-      const item = form.item.value.trim();
-
-      if (!selectedTarget) {
-        alert("도움 대상을 선택해주세요.");
-        return;
-      }
-
-      const stored = localStorage.getItem("gameState");
-      const gameState = stored ? JSON.parse(stored) : { actions: {} };
-
-      gameState.actions["왕자"] = {
-        action1: selectedTarget,
-        action2: item
-      };
-      gameState.orderOverride = selectedTarget;
+      // 순서 큐 저장: 왕자 → 선택된 캐릭터 → 나머지
+      const all = ["병사", "의붓어머니", "앨리시아", "신데렐라", "돌리"];
+      const remaining = all.filter(c => c !== name);
+      gameState.orderQueue = [name, ...remaining];
 
       localStorage.setItem("gameState", JSON.stringify(gameState));
-      location.href = "character-병사.html";
-    };
+      alert(`${name}의 행동이 왕자 다음 순서로 이동합니다.`);
+
+      // 액션2 영역 표시
+      document.getElementById("action2Area").style.display = "block";
+      // 액션1 버튼 숨기기 (선택 완료 후 다시 못 바꾸게)
+      document.getElementById("choiceArea").style.display = "none";
+    }
+
+    function saveAction2() {
+      const item = document.getElementById("itemInput").value.trim();
+      if (!item) {
+        alert("아이템 이름을 입력해야 다음으로 진행할 수 있습니다.");
+        return;
+      }
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      gameState.actions = gameState.actions || {};
+      gameState.actions["왕자"] = gameState.actions["왕자"] || {};
+      gameState.actions["왕자"].action2 = item;
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      alert("아이템 사용 결과가 저장되었습니다. 다음 캐릭터로 이동하세요.");
+      window.location.href = `character-${gameState.orderOverride}.html`;
+    }
+
+    function resetGame() {
+      localStorage.removeItem("gameState");
+      localStorage.removeItem("voteResult");
+      location.href = "character-왕자.html";
+    }
   </script>
 </body>
 </html>

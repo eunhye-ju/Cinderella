@@ -7,91 +7,116 @@
 </head>
 <body>
   <main>
-    <h1>토하: 병사의 행동</h1>
+    <h1>병사의 행동: 순서2</h1>
+    <p>A의 공격으로부터 B를 보호합니다. 먼저 공격자(A)를 선택하세요.</p>
+    <div id="step1">
+      <button onclick="selectAttacker('신데렐라')">신데렐라</button>
+      <button onclick="selectAttacker('돌리')">돌리</button>
+      <button onclick="selectAttacker('앨리시아')">앨리시아</button>
+      <button onclick="selectAttacker('의붓어머니')">의붓어머니</button>
+      <button onclick="selectAttacker('왕자')">왕자</button>
+      <button onclick="skipAction1()">실행하지 않음</button>
+    </div>
 
-    <form id="soldierForm">
-      <section>
-        <h3>1. 호위 - 누구의 공격으로부터 누구를 지킬지 선택하세요.</h3>
-        <p>먼저 공격자(A)를 선택하세요:</p>
-        <div id="attackerButtons"></div>
+    <div id="step2" style="display:none; margin-top: 20px;">
+      <p>이제 보호할 대상(B)을 선택하세요.</p>
+      <div id="protectorButtons"></div>
+    </div>
 
-        <div id="protectorSection" style="display:none;">
-          <p>이제 보호 대상(B)을 선택하세요:</p>
-          <div id="protectorButtons"></div>
-        </div>
-      </section>
-
-      <section id="itemSection" style="display:none;">
-        <h3>2. 아이템 사용 - 사용한 아이템 이름을 입력하세요.</h3>
-        <input type="text" name="item" placeholder="예: 철제 펜" required>
-      </section>
-
-      <button type="submit">다음 캐릭터로</button>
-    </form>
+    <div id="action2" style="display:none; margin-top: 30px;">
+      <p>아이템을 파괴하시겠습니까? (아이템 이름: 철제 펜)</p>
+      <input type="text" id="itemInput" placeholder="아이템 이름 입력">
+      <button onclick="saveActions()">액션2 저장</button>
+    </div>
   </main>
 
+  <footer style="
+    position: fixed;
+    bottom: 40px;
+    width: 100%;
+    text-align: center;
+    z-index: 1000;
+  ">
+    <button style="
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffefb0;
+      border: 2px solid #999;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    " onclick="resetGame()">🔄 처음으로 되돌아가기</button>
+  </footer>
+
   <script>
-    const characters = ["왕자", "병사", "의붓어머니", "앨리시아", "신데렐라", "돌리"];
-    const attackerDiv = document.getElementById("attackerButtons");
-    const protectorDiv = document.getElementById("protectorButtons");
-    const protectorSection = document.getElementById("protectorSection");
-    const itemSection = document.getElementById("itemSection");
-    const form = document.getElementById("soldierForm");
+    let attacker = "";
+    function selectAttacker(name) {
+      attacker = name;
+      document.getElementById("step1").style.display = "none";
+      document.getElementById("step2").style.display = "block";
 
-    let selectedAttacker = null;
-    let selectedProtector = null;
+      const names = ["신데렐라", "돌리", "앨리시아", "의붓어머니", "병사", "왕자"];
+      const targetArea = document.getElementById("protectorButtons");
+      targetArea.innerHTML = "";
 
-    characters.forEach(name => {
-      if (name !== "병사") {
-        const btn = document.createElement("button");
-        btn.textContent = name;
-        btn.type = "button";
-        btn.onclick = () => {
-          selectedAttacker = name;
-          attackerDiv.querySelectorAll("button").forEach(b => b.disabled = false);
-          btn.disabled = true;
-          protectorSection.style.display = "block";
-        };
-        attackerDiv.appendChild(btn);
-      }
-    });
+      names.forEach(name => {
+        if (name !== attacker) {
+          const btn = document.createElement("button");
+          btn.textContent = name;
+          btn.onclick = () => selectProtector(name);
+          targetArea.appendChild(btn);
+        }
+      });
+    }
 
-    characters.forEach(name => {
-      if (name !== "병사") {
-        const btn = document.createElement("button");
-        btn.textContent = name;
-        btn.type = "button";
-        btn.onclick = () => {
-          selectedProtector = name;
-          protectorDiv.querySelectorAll("button").forEach(b => b.disabled = false);
-          btn.disabled = true;
-          itemSection.style.display = "block";
-        };
-        protectorDiv.appendChild(btn);
-      }
-    });
+    function skipAction1() {
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      gameState.actions = gameState.actions || {};
+      gameState.actions["병사"] = gameState.actions["병사"] || {};
+      gameState.actions["병사"].action1 = null;
+      localStorage.setItem("gameState", JSON.stringify(gameState));
 
-    form.onsubmit = function (e) {
-      e.preventDefault();
+      document.getElementById("step1").style.display = "none";
+      document.getElementById("action2").style.display = "block";
+    }
 
-      const item = form.item.value.trim();
+    function selectProtector(name) {
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      gameState.actions = gameState.actions || {};
+      gameState.actions["병사"] = gameState.actions["병사"] || {};
+      gameState.actions["병사"].action1 = { attacker: attacker, target: name };
+      localStorage.setItem("gameState", JSON.stringify(gameState));
 
-      if (!selectedAttacker || !selectedProtector) {
-        alert("공격자와 보호 대상을 모두 선택해주세요.");
+      document.getElementById("step2").style.display = "none";
+      document.getElementById("action2").style.display = "block";
+    }
+
+    function saveActions() {
+      const item = document.getElementById("itemInput").value.trim();
+      if (!item) {
+        alert("아이템 이름을 입력해야 다음으로 진행할 수 있습니다.");
         return;
       }
-
-      const stored = localStorage.getItem("gameState");
-      const gameState = stored ? JSON.parse(stored) : { actions: {} };
-
-      gameState.actions["병사"] = {
-        action1: `${selectedAttacker}->${selectedProtector}`,
-        action2: item
-      };
-
+      const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+      gameState.actions = gameState.actions || {};
+      gameState.actions["병사"] = gameState.actions["병사"] || {};
+      gameState.actions["병사"].action2 = item;
       localStorage.setItem("gameState", JSON.stringify(gameState));
-      location.href = "character-의붓어머니.html";
-    };
+
+      const next = gameState.orderQueue?.shift();
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      if (gameState.orderQueue && gameState.orderQueue.length > 0) {
+        window.location.href = `character-${gameState.orderQueue[0]}.html`;
+      } else {
+        window.location.href = "result.html";
+      }
+    }
+
+    function resetGame() {
+      localStorage.removeItem("gameState");
+      localStorage.removeItem("voteResult");
+      location.href = "character-왕자.html";
+    }
   </script>
 </body>
 </html>
