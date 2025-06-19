@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>신데렐라의 행동</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>토하: 신데렐라의 행동</h1>
+
+    <form id="cinderellaForm">
+      <section>
+        <h3>1. 강탈 - 누구로부터 카드를 빼앗을까요?</h3>
+        <div id="stealButtons"></div>
+      </section>
+
+      <section id="breakSection" style="display:none;">
+        <h3>2. 종 부수기 - 철제 펜을 사용했나요?</h3>
+        <button type="button" onclick="selectBreak(true)">예</button>
+        <button type="button" onclick="selectBreak(false)">아니오</button>
+      </section>
+
+      <button type="submit">다음 캐릭터로</button>
+    </form>
+  </main>
+
+  <script>
+    const targets = ["왕자", "병사", "의붓어머니", "앨리시아", "돌리"];
+    const stealDiv = document.getElementById("stealButtons");
+    const breakSection = document.getElementById("breakSection");
+    const form = document.getElementById("cinderellaForm");
+
+    let selectedSteal = null;
+    let usedItem = null;
+
+    targets.forEach(name => {
+      const btn = document.createElement("button");
+      btn.textContent = name;
+      btn.type = "button";
+      btn.onclick = () => {
+        selectedSteal = name;
+        stealDiv.querySelectorAll("button").forEach(b => b.disabled = false);
+        btn.disabled = true;
+        breakSection.style.display = "block";
+      };
+      stealDiv.appendChild(btn);
+    });
+
+    function selectBreak(result) {
+      usedItem = result;
+      const buttons = form.querySelectorAll("section:nth-of-type(2) button");
+      buttons.forEach(btn => btn.disabled = false);
+      const selected = result ? buttons[0] : buttons[1];
+      selected.disabled = true;
+    }
+
+    form.onsubmit = function (e) {
+      e.preventDefault();
+
+      if (!selectedSteal) {
+        alert("강탈 대상을 선택해주세요.");
+        return;
+      }
+      if (usedItem === null) {
+        alert("종 부수기 여부를 선택해주세요.");
+        return;
+      }
+
+      const stored = localStorage.getItem("gameState");
+      const gameState = stored ? JSON.parse(stored) : { actions: {} };
+
+      gameState.actions["신데렐라"] = {
+        action1: selectedSteal,
+        action2: usedItem ? "철제 펜" : "사용 안 함"
+      };
+
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      location.href = "character-돌리.html";
+    };
+  </script>
+</body>
+</html>

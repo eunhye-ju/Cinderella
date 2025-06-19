@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>병사의 행동</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>토하: 병사의 행동</h1>
+
+    <form id="soldierForm">
+      <section>
+        <h3>1. 호위 - 누구의 공격으로부터 누구를 지킬지 선택하세요.</h3>
+        <p>먼저 공격자(A)를 선택하세요:</p>
+        <div id="attackerButtons"></div>
+
+        <div id="protectorSection" style="display:none;">
+          <p>이제 보호 대상(B)을 선택하세요:</p>
+          <div id="protectorButtons"></div>
+        </div>
+      </section>
+
+      <section id="itemSection" style="display:none;">
+        <h3>2. 아이템 사용 - 사용한 아이템 이름을 입력하세요.</h3>
+        <input type="text" name="item" placeholder="예: 철제 펜" required>
+      </section>
+
+      <button type="submit">다음 캐릭터로</button>
+    </form>
+  </main>
+
+  <script>
+    const characters = ["왕자", "병사", "의붓어머니", "앨리시아", "신데렐라", "돌리"];
+    const attackerDiv = document.getElementById("attackerButtons");
+    const protectorDiv = document.getElementById("protectorButtons");
+    const protectorSection = document.getElementById("protectorSection");
+    const itemSection = document.getElementById("itemSection");
+    const form = document.getElementById("soldierForm");
+
+    let selectedAttacker = null;
+    let selectedProtector = null;
+
+    characters.forEach(name => {
+      if (name !== "병사") {
+        const btn = document.createElement("button");
+        btn.textContent = name;
+        btn.type = "button";
+        btn.onclick = () => {
+          selectedAttacker = name;
+          attackerDiv.querySelectorAll("button").forEach(b => b.disabled = false);
+          btn.disabled = true;
+          protectorSection.style.display = "block";
+        };
+        attackerDiv.appendChild(btn);
+      }
+    });
+
+    characters.forEach(name => {
+      if (name !== "병사") {
+        const btn = document.createElement("button");
+        btn.textContent = name;
+        btn.type = "button";
+        btn.onclick = () => {
+          selectedProtector = name;
+          protectorDiv.querySelectorAll("button").forEach(b => b.disabled = false);
+          btn.disabled = true;
+          itemSection.style.display = "block";
+        };
+        protectorDiv.appendChild(btn);
+      }
+    });
+
+    form.onsubmit = function (e) {
+      e.preventDefault();
+
+      const item = form.item.value.trim();
+
+      if (!selectedAttacker || !selectedProtector) {
+        alert("공격자와 보호 대상을 모두 선택해주세요.");
+        return;
+      }
+
+      const stored = localStorage.getItem("gameState");
+      const gameState = stored ? JSON.parse(stored) : { actions: {} };
+
+      gameState.actions["병사"] = {
+        action1: `${selectedAttacker}->${selectedProtector}`,
+        action2: item
+      };
+
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      location.href = "character-의붓어머니.html";
+    };
+  </script>
+</body>
+</html>

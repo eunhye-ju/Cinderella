@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>게임 결과</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>게임 결과</h1>
+    <p>최종 엔딩으로 이동 중입니다...</p>
+  </main>
+
+  <script>
+    const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+    const actions = gameState.actions || {};
+
+    const order = ["왕자", "병사", "의붓어머니", "앨리시아", "신데렐라", "돌리"];
+    if (gameState.orderOverride) {
+      const target = gameState.orderOverride;
+      const filtered = order.filter(c => c !== target && c !== "왕자");
+      order.splice(0, order.length, "왕자", target, ...filtered);
+    }
+
+    // 1. 종 상태 결정
+    let bellState = "R"; // 기본: 울림
+    for (const name of order) {
+      const action = actions[name];
+      if (!action) continue;
+      if (action.action2 === "철제 펜") {
+        if (["신데렐라", "앨리시아", "병사"].includes(name)) {
+          bellState = "B";
+          break;
+        } else if (["왕자", "의붓어머니", "돌리"].includes(name)) {
+          bellState = "R";
+          break;
+        }
+      }
+    }
+
+    // 2. 사용자 선택된 투표 결과 (로컬에 미리 저장된 값 또는 물어볼 수도 있음)
+    const vote = localStorage.getItem("voteResult") || "C";
+
+    // 3. 암살 결과 계산
+    const assassinTarget = actions["의붓어머니"]?.action1;
+    let killCode = "N";
+    if (assassinTarget && assassinTarget !== "실행하지 않음") {
+      const hasWeapon = ["빗", "과도"].some(w => actions["의붓어머니"]?.action2?.includes(w));
+      if (hasWeapon) {
+        const guard = actions["병사"]?.action1;
+        if (guard && guard.includes("의붓어머니") && guard.includes(assassinTarget)) {
+          killCode = "G";
+        } else {
+          killCode = assassinTarget[0];
+        }
+      }
+    }
+
+    const final = `${bellState}${vote}${killCode}`;
+    window.location.href = `ending/${final}.html`;
+  </script>
+</body>
+</html>

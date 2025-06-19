@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>돌리의 행동</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>토하: 돌리의 행동</h1>
+
+    <form id="dollyForm">
+      <section>
+        <h3>1. 강탈 - 액션을 실행하세요. 실행하셨다면 아래 버튼을 눌러주세요.</h3>
+        <button type="button" onclick="revealItemSection()">강탈 완료</button>
+      </section>
+
+      <section id="itemSection" style="display:none;">
+        <h3>2. 아이템 파괴 - 필요한 아이템 이름을 기입해주세요.</h3>
+        <input type="text" name="item" placeholder="예: 철제 펜" required>
+        <button type="submit">결과 보기</button>
+      </section>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById("dollyForm");
+    const itemSection = document.getElementById("itemSection");
+
+    function revealItemSection() {
+      itemSection.style.display = "block";
+    }
+
+    form.onsubmit = function (e) {
+      e.preventDefault();
+
+      const item = form.item.value.trim();
+
+      const stored = localStorage.getItem("gameState");
+      const gameState = stored ? JSON.parse(stored) : { actions: {} };
+
+      gameState.actions["돌리"] = {
+        action1: "실행함",
+        action2: item === "철제 펜" ? "철제 펜" : "사용 안 함"
+      };
+
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      location.href = "result.html";
+    };
+  </script>
+</body>
+</html>

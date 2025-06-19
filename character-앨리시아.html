@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>앨리시아의 행동</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>토하: 앨리시아의 행동</h1>
+
+    <form id="aliciaForm">
+      <section>
+        <h3>종 부수기 - 아이템 '철제 펜'을 사용했나요?</h3>
+        <button type="button" onclick="selectAction(true)">예</button>
+        <button type="button" onclick="selectAction(false)">아니오</button>
+      </section>
+
+      <button type="submit">다음 캐릭터로</button>
+    </form>
+  </main>
+
+  <script>
+    let usedItem = null;
+    const form = document.getElementById("aliciaForm");
+
+    function selectAction(result) {
+      usedItem = result;
+      const buttons = form.querySelectorAll("button[type='button']");
+      buttons.forEach(btn => btn.disabled = false);
+      const selected = result ? buttons[0] : buttons[1];
+      selected.disabled = true;
+    }
+
+    form.onsubmit = function (e) {
+      e.preventDefault();
+
+      if (usedItem === null) {
+        alert("아이템 사용 여부를 선택해주세요.");
+        return;
+      }
+
+      const stored = localStorage.getItem("gameState");
+      const gameState = stored ? JSON.parse(stored) : { actions: {} };
+
+      gameState.actions["앨리시아"] = {
+        action2: usedItem ? "철제 펜" : "사용 안 함"
+      };
+
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      location.href = "character-신데렐라.html";
+    }
+  </script>
+</body>
+</html>

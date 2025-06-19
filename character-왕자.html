@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>왕자의 행동</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>토하: 왕자의 행동</h1>
+
+    <form id="princeForm">
+      <section>
+        <h3>1. 왕자의 도움 - 행동 순서를 변경할 캐릭터를 선택하세요.</h3>
+        <div id="targetButtons"></div>
+      </section>
+
+      <section id="itemSection" style="display:none;">
+        <h3>2. 아이템 파괴 - 사용한 아이템 이름을 입력하세요.</h3>
+        <input type="text" name="item" placeholder="예: 철제 펜" required>
+      </section>
+
+      <button type="submit">다음 캐릭터로</button>
+    </form>
+  </main>
+
+  <script>
+    const characters = ["병사", "의붓어머니", "앨리시아", "신데렐라", "돌리"];
+    const targetDiv = document.getElementById("targetButtons");
+    const itemSection = document.getElementById("itemSection");
+    const form = document.getElementById("princeForm");
+
+    let selectedTarget = null;
+
+    characters.forEach(name => {
+      const btn = document.createElement("button");
+      btn.textContent = name;
+      btn.type = "button";
+      btn.onclick = () => {
+        selectedTarget = name;
+        targetDiv.querySelectorAll("button").forEach(b => b.disabled = false);
+        btn.disabled = true;
+        itemSection.style.display = "block";
+      };
+      targetDiv.appendChild(btn);
+    });
+
+    form.onsubmit = function (e) {
+      e.preventDefault();
+
+      const item = form.item.value.trim();
+
+      if (!selectedTarget) {
+        alert("도움 대상을 선택해주세요.");
+        return;
+      }
+
+      const stored = localStorage.getItem("gameState");
+      const gameState = stored ? JSON.parse(stored) : { actions: {} };
+
+      gameState.actions["왕자"] = {
+        action1: selectedTarget,
+        action2: item
+      };
+      gameState.orderOverride = selectedTarget;
+
+      localStorage.setItem("gameState", JSON.stringify(gameState));
+      location.href = "character-병사.html";
+    };
+  </script>
+</body>
+</html>
